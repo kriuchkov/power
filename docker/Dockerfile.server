@@ -1,0 +1,19 @@
+FROM golang:1.17
+
+ADD ./ $GOPATH/src
+WORKDIR $GOPATH/src
+
+ENV GOBIN $GOPATH/bin
+ENV GOSUMDB off
+ENV CGO_ENABLED=0 
+ENV GOOS=linux
+ENV POW_DEBUG=false
+
+ENV SERVER_HOST=10.5.0.5
+ENV SERVER_PORT=8092
+ENV FILE_NAME=./cmd/server/quotes.txt
+ENV TCP_ADDRS=10.5.0.5:9092,10.5.0.5:9093,10.5.0.5:9094
+
+RUN make test
+RUN go build  -o $GOBIN/server power/cmd/server
+CMD ["server"]

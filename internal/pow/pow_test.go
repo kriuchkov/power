@@ -16,6 +16,5 @@ func TestPow(t *testing.T) {
 
 	b := big.NewInt(0)
 	b.SetBytes(response)
-
 	assert.Equal(t, CheckHash(b), true)
 }

@@ -10,12 +10,10 @@ import (
 
 const PowDigestLength = 20
 
-var (
-	ErrNotFoundSolution = errors.New("could not find a solution")
-)
+var ErrNotFoundSolution = errors.New("could not find a solution")
 
 // GenHash merges data and prev as bytes using bytes.Join
-//  creating a sha256 hash from this merge
+// creating a sha256 hash from this merge
 func GenHash(data, prev []byte) []byte {
 	head := bytes.Join([][]byte{prev, data}, []byte{})
 	h32 := sha256.Sum256(head)

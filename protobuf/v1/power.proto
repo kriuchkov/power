@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package power;
+
+option go_package = "github.com/kryuchkovnet/power/protobuf/v1";
+
+enum CommandType {
+    None     = 0;
+    Verify   = 1;
+    Connect  = 2;
+    Msg      = 3;
+    Close    = 4;
+}
+
+message Message {
+  CommandType command = 3;
+  bytes body = 5;
+}
