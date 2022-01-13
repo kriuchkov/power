@@ -1,4 +1,4 @@
-# Introduction
+# Client <-> server over UDP and TCP pow protocols
 
 Denial-of-Service-attacks are a typical situation when providing services over a network. A method for preventing DoS-attacks is to have the client show its dedication towards the service before gaining access to it. As proof of dedication, the client is requested to compute an answer to an algorithmic nonce.
 
