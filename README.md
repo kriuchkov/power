@@ -20,7 +20,7 @@ This version of a POW that I implemented over **UDP** and **TCP** had the follow
 
 The pow-alogorith explained below is based on the reverse computation of hashed bytes from DOS-resistant authentication. Generally, it is almost impossible to reverse a hash to original bytes, however, it is easier to find a similar hash easy. 
 
-This is the key idea for this puzzle:  
+This is the key idea for this:  
 ```
 h(X) = 000 . . . 000 | {z } m zeros +Y
 ```
@@ -30,7 +30,7 @@ where h is a hash function, m ∈ Z.
 The difficulty m specifies how many leading zeros the hash h should contain. The client then attempts to find an X that has a hash value with the set number of leading zero.
 
 ## The protocol
-![protocol](https://www.planttext.com/api/plantuml/png/VP6x2iCm34LtVuL6P_0FX582NJjtDxQQ1Fm8bbB8tzSc8Qy-Di4zEbV63R5EF7edHZlSOWYWhf37UqySCDLbhk61gNzE4lt0KoMs6DHCbyK32hBJr5NYhxK4Q1WaHVT2MwtmHQcVj6GpWBOs8T7HduFv3fDGCu86Cw_qCOWbNBZLt29dpcUNRd65Il-U8Wps2tPo6HVfrBf_q7RU9zVaWlm7Rm00)
+![protocol](https://www.planttext.com/api/plantuml/png/VP2x2iCm34LtVuL6P_0FX582NJjtDxQQ1Fp2KWhv-zWaf4rekmdkkKT27R7EF7ad9fjkCGHGLoZZVIGEcDiwj_30F3vdYJxnt8Xt36gbQ_60WXmq3OtuQwq16WP9qRtGDZjyKUedBTaaqDPc93hwIx3UOJ9gHj1WrieOWzZ2ZTlDFNBXV77f7dUexl-a28FzWfrSnaKwRUrAiVns0G00)
 
 A request with a hash is sent to the server over **UDP** the protocol. The hash is a SHA256[32] hash made up of nonce. The server sends the nonce to the client, the client has to solve that when the solution sends back to the server.  A common property of the hashes is that they have to be non-pre-computable. If a hash is pre-computable, a hacker could spend some time calculating solutions for a hash before an attack.
 
