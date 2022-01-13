@@ -11,9 +11,10 @@ The server responds with an **SYN-ACK**. In the end, the client responds with an
 # Implementation
 
 This version of a POW that I implemented over **UDP** and **TCP** had the following characteristics:
-• The protocol needs to scale well when more clients try to connect
-• The workload on the server should be lower than on the client
-• It should be impossible for a client to do any precalculations
+
+1. The protocol needs to scale well when more clients try to connect
+2. The workload on the server should be lower than on the client
+3. It should be impossible for a client to do any precalculations
 
 ## Reverse Computing a Hash
 
