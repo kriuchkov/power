@@ -49,8 +49,6 @@ func New(deps *Dependencies) *Client {
 	return &Client{conn: deps.ServerConn, solver: deps.Hasher}
 }
 
-// GetMessage returns data on a body message.
-//
 //nolint:funlen,nonamedreturns // it's a client method
 func (c *Client) GetMessage(ctx context.Context) (response []byte, err error) {
 	err = c.conn.SetWriteDeadline(time.Now().Add(DefaultClientTimeout))
@@ -108,7 +106,6 @@ func (c *Client) GetMessage(ctx context.Context) (response []byte, err error) {
 	log.WithFields(log.Fields{"s": msgSize, "c": verifyMessage.GetCommand(), "i": byteIndex, "bv": byteValue}).
 		Debug("read a verify message")
 
-	// third step: find a nonce
 	foundNonce := c.solver.FindNonce(ctx, serverHash, byteIndex, byteValue)
 
 	log.WithFields(log.Fields{"nonce": foundNonce}).Debug("found nonce")
@@ -134,7 +131,6 @@ func (c *Client) GetMessage(ctx context.Context) (response []byte, err error) {
 	log.WithFields(log.Fields{"size": msgSize, "command": message.GetCommand()}).
 		Debug("send a hash message")
 
-	// fifth step: read a message
 	err = c.conn.SetReadDeadline(time.Now().Add(DefaultClientTimeout))
 	if err != nil {
 		return response, errors.Wrap(err, "set read deadline")
