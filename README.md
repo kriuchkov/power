@@ -36,10 +36,10 @@ The client must then find a hash that satisfies the server's requirements:
 
 ### Diagram Explanation
 
-**Step 1** shows the server generating a nonce and hashing it before sending it to the client.
-**Step 2** represents the client receiving the verify message and attempting to find a valid hash.
-**Step 3** shows the client sending the computed nonce back to the server.
-**Step 4** depicts the server verifying the nonce and determining if the hash is valid or not.
+- **Step 1** shows the server generating a nonce and hashing it before sending it to the client.
+- **Step 2** represents the client receiving the verify message and attempting to find a valid hash.
+- **Step 3** shows the client sending the computed nonce back to the server.
+- **Step 4** depicts the server verifying the nonce and determining if the hash is valid or not.
 
 ## Check using Docker
 
