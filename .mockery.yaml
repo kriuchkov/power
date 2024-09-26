@@ -1,0 +1,13 @@
+with-expecter: true
+filename: "mock_{{.InterfaceName | lower }}.go"
+dir: "{{.InterfaceDir}}/mocks"
+mockname: "Mock{{.InterfaceName}}"
+outpkg: "{{.PackageName}}_mocks"
+packages:
+    github.com/kriuchkov/power/pkg/server:
+        interfaces:
+          PowHandler:
+    github.com/kriuchkov/power/pkg/client:
+        interfaces:
+          SolverHash:
+        

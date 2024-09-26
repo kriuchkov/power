@@ -1,45 +1,61 @@
 package pow
 
 import (
-	"bytes"
+	"context"
 	"crypto/sha256"
-	"errors"
-	"math"
-	"math/big"
+	"fmt"
+	"net"
 )
 
 const PowDigestLength = 20
 
-var ErrNotFoundSolution = errors.New("could not find a solution")
-
-// GenHash merges data and prev as bytes using bytes.Join
-// creating a sha256 hash from this merge
-func GenHash(data, prev []byte) []byte {
-	head := bytes.Join([][]byte{prev, data}, []byte{})
-	h32 := sha256.Sum256(head)
-	output := h32[:]
-	return output
+type Pow struct {
+	difficulty int
 }
 
-// SolveHash iterates until enough leading zeros has been found
-func SolveHash(raw []byte) (response []byte, err error) {
-	var nonce int64
-	for nonce = 0; nonce < math.MaxInt64; nonce++ {
-		bigI := big.NewInt(0)
-		bigI.Add(bigI.SetBytes(raw), big.NewInt(nonce))
+func NewPow(difficulty int) *Pow {
+	return &Pow{difficulty: difficulty}
+}
 
-		hash := sha256.Sum256(bigI.Bytes())
-		if CheckHash(bigI.SetBytes(hash[:])) {
-			return hash[:], nil
+func (p *Pow) GenerateHash(msg []byte, nonce int) []byte {
+	data := fmt.Sprintf("%s:%d", msg, nonce)
+	hash := sha256.Sum256([]byte(data))
+	return hash[:]
+}
+
+func (p *Pow) IsValidHash(hash []byte, byteIndex int, byteValue byte) bool {
+	if len(hash) < p.difficulty {
+		return false
+	}
+
+	//nolint:intrange // we are sure that p.difficulty is in the range of hash length
+	for i := 0; i < p.difficulty; i++ {
+		if hash[i] != '0' {
+			return false
 		}
 	}
-	return response, ErrNotFoundSolution
+	return hash[byteIndex] == byteValue
 }
 
-// CheckHash checks the n first bits in sha1(hash.seed) for zeroes
-// checking the target number (0x8000...) bigger than old
-func CheckHash(hash *big.Int) bool {
-	target := big.NewInt(1)
-	target = target.Lsh(target, uint(256-PowDigestLength))
-	return target.Cmp(hash) > 0
+func (p *Pow) GetClientConditions(clientAddr net.Addr) (int, byte) {
+	ip := clientAddr.String()
+	byteIndex := int(ip[0]) % 32
+	byteValue := ip[len(ip)-1]
+	return byteIndex, byteValue
+}
+
+func (p *Pow) FindNonce(ctx context.Context, hash []byte, byteIndex int, byteValue byte) int {
+	var nonce = 0
+	for {
+		select {
+		case <-ctx.Done():
+			return -1
+		default:
+			clientHash := p.GenerateHash(hash, nonce)
+			if p.IsValidHash(clientHash, byteIndex, byteValue) {
+				return nonce
+			}
+			nonce++
+		}
+	}
 }

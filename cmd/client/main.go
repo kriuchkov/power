@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
+	"os/signal"
 	"strconv"
+	"time"
 
-	"power/internal/config"
-	"power/internal/pow"
-	"power/internal/provider/power"
+	"github.com/kriuchkov/power/internal/config"
+	"github.com/kriuchkov/power/internal/pow"
+	"github.com/kriuchkov/power/pkg/client"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -17,39 +18,42 @@ import (
 )
 
 func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	powDebug, _ := strconv.ParseBool(os.Getenv("POW_DEBUG"))
 	if powDebug {
-		err := godotenv.Load(".env")
-		if err != nil {
-			log.Fatalf("Error loading .env: %s", err.Error())
-		}
+		godotenv.Load(".env") //nolint:errcheck // ok for this case
 		log.SetLevel(log.DebugLevel)
+		log.SetFormatter(&log.TextFormatter{DisableTimestamp: true})
 	}
 
 	var conf config.Config
 	err := envconfig.Process("server", &conf)
 	if err != nil {
-		log.Fatalf("Error loading config: %s", err.Error())
+		log.Panicf("loading config: %s", err.Error())
 	}
 
-	conn, err := net.ListenUDP("udp", getResolveUDPAddr(conf.ClientAddr()))
+	log.WithField("config", conf).Info("config loaded")
+
+	serverConn, err := net.Dial("tcp", conf.ServerAddr)
 	if err != nil {
-		log.Fatalf("couldn't open a udp connection: %s", conf.ServerAddr())
+		log.Panicf("connect to server: %s", err.Error())
 	}
-	defer conn.Close()
+	defer serverConn.Close()
 
-	ctx := context.Background()
-	client := power.New(ctx, conn, getResolveUDPAddr(conf.ServerAddr()), pow.SolveHash)
+	client := client.New(&client.Dependencies{ServerConn: serverConn, Hasher: pow.NewPow(conf.Difficulty)})
+	if err != nil {
+		log.WithError(err).Panic("create a new client")
+	}
+
+	ctx, cancel = context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	msg, err := client.GetMessage(ctx)
 	if err != nil {
-		log.Fatalf("couldn't read message from server %s", err.Error())
+		log.WithError(err).Panic("get message")
 	}
 
-	fmt.Println(string(msg))
-	client.Close()
-}
-
-func getResolveUDPAddr(address string) *net.UDPAddr {
-	t, _ := net.ResolveUDPAddr("udp", address)
-	return t
+	log.WithField("message", string(msg)).Info("message received")
 }

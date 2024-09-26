@@ -1,5 +1,5 @@
-module github.com/kryuchkovnet/protobuf
+module github.com/kriuchkov/protobuf
 
-go 1.17
+go 1.21
 
 require google.golang.org/protobuf v1.27.1

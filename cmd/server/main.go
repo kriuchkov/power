@@ -3,87 +3,61 @@ package main
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
 	"math/rand"
-	"net"
 	"os"
 	"os/signal"
 	"strconv"
-	"time"
 
-	"power/internal/config"
-	"power/internal/protomsg"
-	"power/internal/services/server"
+	"github.com/kriuchkov/power/internal/config"
+	"github.com/kriuchkov/power/internal/pow"
+	"github.com/kriuchkov/power/pkg/server"
 
-	"github.com/apibillme/cache"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	log "github.com/sirupsen/logrus"
 )
 
-const cacheTime = 2 * time.Second
-
 func main() {
-	cache := cache.New(128, cache.WithTTL(cacheTime))
-	ctx, cancel := context.WithCancel(context.Background())
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		oscall := <-c
-		log.Printf("system call: %+v", oscall)
-		cancel()
-	}()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	powDebug, _ := strconv.ParseBool(os.Getenv("POW_DEBUG"))
 	if powDebug {
-		err := godotenv.Load(".env")
-		if err != nil {
-			log.Fatalf("Error loading .env: %s", err.Error())
-		}
+		godotenv.Load(".env") //nolint:errcheck // ok for this case
 		log.SetLevel(log.DebugLevel)
+		log.SetFormatter(&log.TextFormatter{DisableTimestamp: true})
 	}
 
 	var conf config.Config
 	err := envconfig.Process("server", &conf)
 	if err != nil {
-		log.Fatalf("Error loading config: %s", err.Error())
+		log.WithError(err).Fatal("process the config")
 	}
 
-	quotesRaw, err := ioutil.ReadFile(conf.QuotesFileName)
+	log.WithField("config", conf).Info("config loaded")
+
+	quotesRaw, err := os.ReadFile(conf.QuotesFileName)
 	if err != nil {
-		log.Fatalf("couldn't open a file with quotes %s", err.Error())
+		log.WithError(err).Fatal("read quotes file")
 	}
 
 	quotes := bytes.Split(quotesRaw, []byte("\n"))
 	if len(quotes) == 0 {
-		log.Fatal("quotes == 0")
+		log.Panic("quotes file is empty")
 	}
 
-	handler := func() *protomsg.Message {
-		msg := &protomsg.Message{
-			Command: protomsg.CommandTypeMsg,
-			Body:    []byte(quotes[rand.Intn(len(quotes))]),
-		}
-		return msg
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	addrs := make([]*net.TCPAddr, 0, len(conf.TCPaddrs))
-	for i := range conf.TCPaddrs {
-		addrs = append(addrs, getResolveTCPAddr(conf.TCPaddrs[i]))
-	}
-	serv, err := server.NewUDP(conf.ServerHost, conf.ServerPort, cache, addrs, server.WithHandler(handler))
+	serv, err := server.New(&server.Dependencies{
+		TCPAddress:     conf.ServerAddr,
+		PowHandler:     pow.NewPow(conf.Difficulty),
+		MessageHandler: func() []byte { return quotes[rand.Intn(len(quotes))] }, //nolint:gosec // it's ok here
+	})
 	if err != nil {
-		log.Fatalf("couldn't create a new server instance %s", err.Error())
+		log.WithError(err).Fatal("create a new server")
 	}
 
+	log.WithField("address", conf.ServerAddr).Info("server started")
 	go serv.Listen(ctx)
+
 	<-ctx.Done()
 	log.Println("server exited properly")
-}
-
-func getResolveTCPAddr(address string) *net.TCPAddr {
-	t, _ := net.ResolveTCPAddr("tcp", address)
-	return t
 }

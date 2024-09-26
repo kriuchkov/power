@@ -1,4 +1,4 @@
-FROM golang:1.17
+FROM golang:1.22
 
 ADD ./ $GOPATH/src
 WORKDIR $GOPATH/src
@@ -9,11 +9,9 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV POW_DEBUG=false
 
-ENV CLIENT_HOST=10.5.0.6
-ENV CLIENT_PORT=7092
-ENV SERVER_HOST=10.5.0.5
-ENV SERVER_PORT=8092
+ENV SERVER_ADDR=10.5.0.5:9090
+ENV DIFFICULTY=1
 
 RUN make test
-RUN go build  -o $GOBIN/client power/cmd/client
+RUN go build  -o $GOBIN/client ./cmd/client
 CMD ["client"]

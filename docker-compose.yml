@@ -7,11 +7,6 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.server
-    ports:
-      - "8092:8092"
-      - "9092:9092"
-      - "9093:9093"
-      - "9094:9094"
   client:
     depends_on:
       server:
@@ -22,8 +17,6 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.client
-    ports:
-      - "7092:7092"
       
 networks:
     power-net: 

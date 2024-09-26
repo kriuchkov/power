@@ -18,6 +18,9 @@ server:
 gen:
 	go generate ./...
 
+mod:
+	go mod tidy && go mod vendor
+
 docker-run:
 	docker-compose build && docker-compose up 
 
