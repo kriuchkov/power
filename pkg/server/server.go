@@ -66,13 +66,29 @@ func New(deps *Dependencies) (*Server, error) {
 }
 
 func (h *Server) Listen(ctx context.Context) {
-	defer h.listener.Close()
+	done := make(chan struct{})
+
+	go func() {
+		<-ctx.Done()
+		h.listener.Close() // close the listener to stop accepting new connections
+		close(done)        // signal that shutdown is complete
+	}()
+
 	for {
-		conn, err := h.listener.Accept()
-		if err != nil {
-			continue
+		select {
+		case <-done:
+			return
+		default:
+			conn, err := h.listener.Accept()
+			if err != nil {
+				if errors.Is(err, net.ErrClosed) {
+					return
+				}
+				continue
+			}
+
+			go h.handleTCPConnection(ctx, conn)
 		}
-		go h.handleTCPConnection(ctx, conn)
 	}
 }
 
